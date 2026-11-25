@@ -1,6 +1,7 @@
 package com.classchat.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.classchat.dto.ChatMessage;
 import com.classchat.dto.ChatRequest;
@@ -44,4 +45,68 @@ class ChatServiceTest {
     //   Bonus: check the text of the exception with assertEquals(..., exception.getMessage()).
     //   Run them with:  ./mvnw test
     //   Tests of invalid messages fail until TODO 2 is done: that is normal. Write the test first, then the code.
+
+    @Test
+    void validMessageGetsTimestampOfTheClock() {
+        ChatMessage result = chatService.process(new ChatRequest("Ana", "Hello!"));
+
+        assertEquals(NOW, result.timestamp());
+    }
+
+    @Test
+    void nicknameWithExactly30CharactersIsAccepted() {
+        String nickname = "a".repeat(30);
+
+        ChatMessage result = chatService.process(new ChatRequest(nickname, "Hello!"));
+
+        assertEquals(nickname, result.sender());
+    }
+
+    @Test
+    void messageWithExactly500CharactersIsAccepted() {
+        String content = "a".repeat(500);
+
+        ChatMessage result = chatService.process(new ChatRequest("Ana", content));
+
+        assertEquals(content, result.content());
+    }
+
+
+
+    @Test
+    void blankNicknameIsRejected() {
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("", "Hello!")));
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("   ", "Hello!")));
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest(null, "Hello!")));
+    }
+
+    @Test
+    void blankMessageIsRejected() {
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("Ana", "")));
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("Ana", "   ")));
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("Ana", null)));
+    }
+
+    @Test
+    void nicknameWith31CharactersIsRejected() {
+        String nickname = "a".repeat(31);
+
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest(nickname, "Hello!")));
+    }
+
+    @Test
+    void messageWith501CharactersIsRejected() {
+        String content = "a".repeat(501);
+
+        assertThrows(InvalidMessageException.class,
+                () -> chatService.process(new ChatRequest("Ana", content)));
+    }
+
 }
